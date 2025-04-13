@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatWar Command Center</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .controls {
+            position: absolute;
+            right: 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .dictionary-btn {
+            background-color: #002244;
+            border: 1px solid #0088ff;
+            color: #0088ff;
+        }
+
+        .dictionary-btn:hover {
+            background-color: #003366;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+            flex-grow: 1;
+        }
+
+        .channel {
+            flex: 1;
+            background-color: #001100;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .channel-title {
+            text-align: center;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .language-selector {
+            font-size: 12px;
+            background-color: #001100;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        .message {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .message.system {
+            color: #ffff00;
+            font-style: italic;
+        }
+
+        .message.error {
+            color: #ff0000;
+        }
+
+        .message.command {
+            color: #00aaff;
+            font-weight: bold;
+        }
+
+        .message.result {
+            margin-left: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message.success {
+            color: #00ff00;
+        }
+
+        .message.failure {
+            color: #ff6666;
+        }
+
+        .parsed-command {
+            color: #aaffaa;
+            font-size: 12px;
+            margin-left: 10px;
+            padding: 3px;
+            background-color: #001100;
+            border: 1px dotted #00aa00;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 5px;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            background-color: #001100;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background-color: #003300;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        button:hover {
+            background-color: #004400;
+        }
+
+        button.danger {
+            background-color: #330000;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        button.danger:hover {
+            background-color: #440000;
+        }
+
+        .grid-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+            background-color: #001100;
+            border: 2px solid #00ff00;
+            padding: 2px;
+            margin-top: 10px;
+        }
+
+        .cell {
+            width: 80px;
+            height: 80px;
+            background-color: #002200;
+            border: 1px solid #004400;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .cell:hover {
+            background-color: #003300;
+        }
+
+        .cell-coordinates {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 10px;
+            color: #008800;
+        }
+
+        .unit {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .unit.friendly {
+            color: #FFFFFF;
+        }
+
+        .unit.hostile {
+            color: #FF0000;
+        }
+
+        .commander {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .hp {
+            font-size: 10px;
+            position: absolute;
+            bottom: 5px;
+        }
+
+        .city {
+            color: #ffff00;
+        }
+
+        .status {
+            margin-top: 10px;
+            text-align: center;
+            padding: 5px;
+            background-color: #001100;
+            border: 1px solid #00ff00;
+            width: 100%;
+        }
+
+        .command-help {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #001100;
+            border: 2px solid #00ff00;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #dictionary-container {
+            max-height: 200px;
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        #dictionary-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .command-help h3 {
+            color: #00ff00;
+            margin: 0 0 10px 0;
+            text-align: center;
+        }
+
+        .command-help p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .dictionary-section {
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .dictionary-words {
+            color: #ffffff;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        
+        #examples {
+            white-space: pre-line;
+            font-style: italic;
+            color: #d0d0d0;
+            padding-left: 10px;
+            border-left: 2px solid #008800;
+        }
+        
+        .example-item {
+            margin-bottom: 8px;
+        }
+        
+        #examples .translation {
+            color: #9a9a9a;
+            font-size: 0.9em;
+            display: block;
+            margin-left: 10px;
+        }
+
+        .debug-log {
+            background-color: #001100;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin-top: 10px;
+            display: block;
+            height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .language-info {
+            display: flex;
+            justify-content: space-between;
+            background-color: #001100;
+            border: 1px solid #00ff00;
+            margin-top: 10px;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .language-info div {
+            flex: 1;
+            padding: 5px;
+            border-right: 1px solid #00ff00;
+        }
+
+        .language-info div:last-child {
+            border-right: none;
+        }
+
+        .language-info span {
+            font-weight: bold;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">CHATWAR COMMAND CENTER</div>
+        <div class="controls">
+            <button id="debug-toggle" onclick="toggleDebug()">DEBUG CONSOLE</button>
+            <button id="reset-game" class="danger" onclick="resetGame()">RESET GAME</button>
+            <button id="dictionary-btn" class="dictionary-btn">LANGUAGE DICTIONARY</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="channel">
+            <div class="channel-title">
+                <span>ALLIED TRANSMISSION</span>
+                <select id="allied-language" class="language-selector" onchange="changeLanguage('player1', this.value)">
+                    <option value="english">ENGLISH</option>
+                    <option value="swahili">SWAHILI</option>
+                    <option value="hindi">HINDI</option>
+                </select>
+            </div>
+            <div class="messages" id="allied-messages"></div>
+            <div class="input-area">
+                <input type="text" id="allied-input" placeholder="Enter command...">
+                <button id="allied-send" onclick="sendMessage('allied')">SEND</button>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <h2>TACTICAL MAP</h2>
+            <div class="grid" id="game-grid"></div>
+            <div class="status" id="game-status">AWAITING ORDERS...</div>
+            <div class="language-info" id="language-info">
+                <div>ALLIED: <span id="player1-language">ENGLISH</span></div>
+                <div>ENEMY: <span id="player2-language">SWAHILI</span></div>
+            </div>
+            <div class="command-help">
+                <h3>MILITARY DICTIONARY</h3>
+                <div id="dictionary-container">
+                    <div class="dictionary-section">
+                        <div class="section-title">MOVE COMMANDS:</div>
+                        <div class="dictionary-words" id="move-commands">
+                            move, advance, proceed, go, march, relocate, shift
+                        </div>
+                    </div>
+                    <div class="dictionary-section">
+                        <div class="section-title">ATTACK COMMANDS:</div>
+                        <div class="dictionary-words" id="attack-commands">
+                            attack, strike, hit, assault, engage, charge, raid
+                        </div>
+                    </div>
+                    <div class="dictionary-section">
+                        <div class="section-title">UNIT IDENTIFIERS:</div>
+                        <div class="dictionary-words" id="unit-identifiers">
+                            Alpha, Beta, Gamma, Delta, Squad, Team, Unit
+                        </div>
+                    </div>
+                    <div class="dictionary-section">
+                        <div class="section-title">NUMBERS:</div>
+                        <div class="dictionary-words" id="numbers">
+                            zero/0, one/1, two/2, three/3, four/4, five/5
+                        </div>
+                    </div>
+                    <div class="dictionary-section">
+                        <div class="section-title">DIRECTIONS:</div>
+                        <div class="dictionary-words" id="directions">
+                            north, south, east, west
+                        </div>
+                    </div>
+                    <div class="dictionary-section">
+                        <div class="section-title">EXAMPLE SENTENCES:</div>
+                        <div class="dictionary-words" id="examples">
+                            Alpha team move to position three four
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="channel">
+            <div class="channel-title">
+                <span>ENEMY TRANSMISSION</span>
+                <select id="enemy-language" class="language-selector" onchange="changeLanguage('player2', this.value)">
+                    <option value="swahili">SWAHILI</option>
+                    <option value="english">ENGLISH</option>
+                    <option value="hindi">HINDI</option>
+                </select>
+            </div>
+            <div class="messages" id="enemy-messages"></div>
+            <div class="input-area">
+                <input type="text" id="enemy-input" placeholder="Enter command...">
+                <button id="enemy-send" onclick="sendMessage('enemy')">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="debug-log" class="debug-log"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let gameState = null;
+        let debugMode = true;
+
+        // Dictionary data
+        const dictionaries = {
+            "english": {
+                "move": ["move", "advance", "proceed", "go", "march", "relocate", "shift"],
+                "attack": ["attack", "strike", "hit", "assault", "engage", "charge", "raid"],
+                "units": ["Alpha", "Beta", "Gamma", "Delta", "Squad", "Team", "Unit"],
+                "numbers": ["zero/0", "one/1", "two/2", "three/3", "four/4", "five/5"],
+                "directions": ["north", "south", "east", "west"],
+                "examples": [
+                    "Alpha team move to position three four",
+                    "Squad Beta attack coordinates two one",
+                    "Unit Gamma advance to grid four zero",
+                    "Delta move north to position five two"
+                ]
+            },
+            "swahili": {
+                "move": ["nenda", "ziende", "sogeza", "hamisha", "tembea", "peleka"],
+                "attack": ["shambulia", "vamia", "piga", "rukia", "dhuru", "pambana"],
+                "units": ["Alpha", "Beta", "Gamma", "Delta", "Kikosi", "Jeshi", "Wapiganaji"],
+                "numbers": ["sifuri/0", "moja/1", "mbili/2", "tatu/3", "nne/4", "tano/5"],
+                "directions": ["kaskazini", "kusini", "mashariki", "magharibi"],
+                "examples": [
+                    "Kikosi Alpha nenda nafasi tatu nne (Alpha team move to position three four)",
+                    "Jeshi Beta shambulia mahali mbili moja (Beta forces attack location two one)",
+                    "Wapiganaji Gamma sogeza hadi gridi nne sifuri (Gamma fighters advance to grid four zero)",
+                    "Delta tembea kaskazini hadi nafasi tano mbili (Delta move north to position five two)"
+                ]
+            },
+            "hindi": {
+                "move": ["jao", "badho", "chalo", "aage badho", "sthanantarit karo", "prasthan karo"],
+                "attack": ["hamla karo", "akraman karo", "prahar karo", "var karo", "dhava bolo", "maar karo"],
+                "units": ["Alpha", "Beta", "Gamma", "Delta", "Unit", "Dasta", "Tukdi"],
+                "numbers": ["shunya/0", "ek/1", "do/2", "teen/3", "char/4", "panch/5"],
+                "directions": ["uttar", "dakshin", "purv", "paschim"],
+                "examples": [
+                    "Alpha dasta jao sthan teen char par (Alpha unit move to position three four)",
+                    "Beta tukdi hamla karo do ek par (Beta squad attack at two one)",
+                    "Gamma unit badho grid char shunya tak (Gamma unit advance to grid four zero)",
+                    "Delta uttar dishaa mein panch do sthan par jao (Delta move north to position five two)"
+                ]
+            }
+        };
+
+        function updateDictionary(language) {
+            const dict = dictionaries[language] || dictionaries["english"];
+            
+            // Update the dictionary display
+            document.getElementById('move-commands').textContent = dict.move.join(", ");
+            document.getElementById('attack-commands').textContent = dict.attack.join(", ");
+            document.getElementById('unit-identifiers').textContent = dict.units.join(", ");
+            document.getElementById('numbers').textContent = dict.numbers.join(", ");
+            document.getElementById('directions').textContent = dict.directions.join(", ");
+            
+            // Format examples with translations
+            const examplesContainer = document.getElementById('examples');
+            examplesContainer.innerHTML = '';
+            
+            dict.examples.forEach(example => {
+                const exampleDiv = document.createElement('div');
+                exampleDiv.className = 'example-item';
+                
+                // Check if the example contains a translation (in parentheses)
+                const parts = example.split(/(\(.+\))$/);
+                if (parts.length > 1) {
+                    // There's a translation
+                    exampleDiv.textContent = parts[0].trim();
+                    
+                    const translationSpan = document.createElement('span');
+                    translationSpan.className = 'translation';
+                    translationSpan.textContent = parts[1];
+                    exampleDiv.appendChild(translationSpan);
+                } else {
+                    // No translation
+                    exampleDiv.textContent = example;
+                }
+                
+                examplesContainer.appendChild(exampleDiv);
+            });
+            
+            debugLog(`Updated dictionary to ${language}`);
+        }
+
+        function debugLog(message) {
+            const debugLogElement = document.getElementById('debug-log');
+            const logEntry = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            debugLogElement.appendChild(logEntry);
+            debugLogElement.scrollTop = debugLogElement.scrollHeight;
+            
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugLogElement = document.getElementById('debug-log');
+            debugLogElement.style.display = debugMode ? 'block' : 'none';
+            debugLog(`Debug mode ${debugMode ? 'enabled' : 'disabled'}`);
+        }
+
+        function changeLanguage(player, language) {
+            debugLog(`Changing ${player} language to ${language}`);
+            socket.emit('set_language', {
+                player: player,
+                language: language
+            });
+            
+            // Update dictionary if allied language changes
+            if (player === 'player1') {
+                updateDictionary(language);
+            }
+        }
+
+        function resetGame() {
+            if (confirm('Are you sure you want to reset the game? All progress will be lost.')) {
+                debugLog('Resetting game...');
+                socket.emit('reset_game');
+            }
+        }
+
+        function initializeGrid() {
+            const grid = document.getElementById('game-grid');
+            for (let x = 0; x < 6; x++) {
+                for (let y = 0; y < 6; y++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${x}-${y}`;
+                    
+                    // Add coordinates
+                    const coords = document.createElement('div');
+                    coords.className = 'cell-coordinates';
+                    coords.textContent = `${x},${y}`;
+                    cell.appendChild(coords);
+                    
+                    // Add click handler
+                    cell.addEventListener('click', () => {
+                        onCellClick(x, y);
+                    });
+                    
+                    grid.appendChild(cell);
+                }
+            }
+            debugLog('Grid initialized');
+        }
+
+        function onCellClick(x, y) {
+            // Store the coordinates in the currently focused input
+            const activeElement = document.activeElement;
+            
+            if (activeElement.tagName === 'INPUT' && activeElement.type === 'text') {
+                // Get current cursor position
+                const start = activeElement.selectionStart;
+                
+                // Insert the coordinates
+                const coords = `${x} ${y}`;
+                const value = activeElement.value;
+                activeElement.value = value.substring(0, start) + coords + value.substring(activeElement.selectionEnd);
+                
+                // Set cursor position after the inserted text
+                activeElement.selectionStart = activeElement.selectionEnd = start + coords.length;
+                
+                debugLog(`Inserted coordinates (${x}, ${y}) into input`);
+            } else {
+                debugLog(`Cell clicked: (${x}, ${y})`);
+            }
+        }
+
+        function updateGrid(state) {
+            debugLog('Updating grid with new state');
+            // Clear all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                // Keep the coordinates
+                const coords = cell.querySelector('.cell-coordinates');
+                cell.innerHTML = '';
+                cell.appendChild(coords);
+            });
+
+            // Update cities
+            state.cities.forEach(([x, y]) => {
+                const cell = document.getElementById(`cell-${x}-${y}`);
+                const cityDiv = document.createElement('div');
+                cityDiv.className = 'unit city';
+                cityDiv.textContent = 'C';
+                cell.appendChild(cityDiv);
+            });
+
+            // Update units
+            Object.entries(state.units).forEach(([id, unit]) => {
+                const [x, y] = unit.position;
+                const cell = document.getElementById(`cell-${x}-${y}`);
+                
+                const unitDiv = document.createElement('div');
+                unitDiv.className = `unit ${id.startsWith('p1_') ? 'friendly' : 'hostile'}`;
+                unitDiv.textContent = unit.type;
+                
+                const commanderDiv = document.createElement('div');
+                commanderDiv.className = 'commander';
+                commanderDiv.textContent = unit.commander;
+                
+                const hpDiv = document.createElement('div');
+                hpDiv.className = 'hp';
+                hpDiv.textContent = `HP: ${unit.hp}`;
+                
+                cell.appendChild(unitDiv);
+                cell.appendChild(commanderDiv);
+                cell.appendChild(hpDiv);
+            });
+
+            // Update language display
+            if (state.languages) {
+                document.getElementById('player1-language').textContent = state.languages.player1.toUpperCase();
+                document.getElementById('player2-language').textContent = state.languages.player2.toUpperCase();
+                
+                // Update the dropdown selectors
+                document.getElementById('allied-language').value = state.languages.player1;
+                document.getElementById('enemy-language').value = state.languages.player2;
+            }
+        }
+
+        // Add command history arrays and current index trackers
+        let alliedCommandHistory = [];
+        let enemyCommandHistory = [];
+        let alliedHistoryIndex = -1;
+        let enemyHistoryIndex = -1;
+
+        function sendMessage(channel) {
+            const input = document.getElementById(`${channel}-input`);
+            const message = input.value.trim();
+            if (message) {
+                debugLog(`Sending message from ${channel}: ${message}`);
+                
+                const parts = message.toLowerCase().split(' ');
+                if ((parts[0] === 'move' && parts.length === 4) || 
+                    (parts[0] === 'attack' && parts.length === 4)) {
+                    debugLog(`Recognized as ${parts[0]} command`);
+                    socket.emit(parts[0], {
+                        command: message,
+                        player: channel === 'allied' ? 'player1' : 'player2'
+                    });
+                } else {
+                    // Regular message or natural language command
+                    debugLog('Sending as command through language parser');
+                    socket.emit('command', {
+                        command: message,
+                        player: channel === 'allied' ? 'player1' : 'player2'
+                    });
+                }
+                
+                // Add command to history
+                if (channel === 'allied') {
+                    alliedCommandHistory.push(message);
+                    alliedHistoryIndex = alliedCommandHistory.length;
+                } else {
+                    enemyCommandHistory.push(message);
+                    enemyHistoryIndex = enemyCommandHistory.length;
+                }
+                
+                input.value = '';
+                input.focus(); // Keep focus on input after sending
+            }
+        }
+
+        // Add event listeners for Enter key and arrow keys on both input boxes
+        document.getElementById('allied-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage('allied');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (alliedHistoryIndex > 0) {
+                    alliedHistoryIndex--;
+                    this.value = alliedCommandHistory[alliedHistoryIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (alliedHistoryIndex < alliedCommandHistory.length) {
+                    alliedHistoryIndex++;
+                    this.value = alliedHistoryIndex === alliedCommandHistory.length ? '' : alliedCommandHistory[alliedHistoryIndex];
+                }
+            }
+        });
+
+        document.getElementById('enemy-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage('enemy');
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (enemyHistoryIndex > 0) {
+                    enemyHistoryIndex--;
+                    this.value = enemyCommandHistory[enemyHistoryIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (enemyHistoryIndex < enemyCommandHistory.length) {
+                    enemyHistoryIndex++;
+                    this.value = enemyHistoryIndex === enemyCommandHistory.length ? '' : enemyCommandHistory[enemyHistoryIndex];
+                }
+            }
+        });
+
+        function formatParsedCommand(parsedCommand) {
+            if (!parsedCommand || !parsedCommand.orders || parsedCommand.orders.length === 0) {
+                return null;
+            }
+            
+            let formatted = "Interpreted as:";
+            parsedCommand.orders.forEach(order => {
+                let params = "";
+                if (order.parameters) {
+                    if (Array.isArray(order.parameters)) {
+                        params = order.parameters.join(",");
+                    } else if (typeof order.parameters === 'object') {
+                        params = `${order.parameters.x},${order.parameters.y}`;
+                    }
+                }
+                formatted += `\n${order.unit} ${order.action} ${params}`;
+            });
+            
+            return formatted;
+        }
+
+        function addMessage(channel, message, isSystem = false, isError = false, parsedCommand = null, isCommand = false, isResult = false, isSuccess = false) {
+            const messages = document.getElementById(`${channel}-messages`);
+            const messageDiv = document.createElement('div');
+            
+            // Set appropriate CSS classes
+            let classNames = ['message'];
+            if (isSystem) classNames.push('system');
+            if (isError) classNames.push('error');
+            if (isCommand) classNames.push('command');
+            if (isResult) classNames.push('result');
+            if (isResult && isSuccess) classNames.push('success');
+            if (isResult && !isSuccess) classNames.push('failure');
+            
+            messageDiv.className = classNames.join(' ');
+            messageDiv.textContent = message;
+            messages.appendChild(messageDiv);
+            
+            // If we have a parsed command, add it below the message
+            if (parsedCommand) {
+                const formattedParsed = formatParsedCommand(parsedCommand);
+                if (formattedParsed) {
+                    const parsedDiv = document.createElement('div');
+                    parsedDiv.className = 'parsed-command';
+                    parsedDiv.textContent = formattedParsed;
+                    messages.appendChild(parsedDiv);
+                    debugLog(`Added parsed command display: ${formattedParsed}`);
+                }
+            }
+            
+            messages.scrollTop = messages.scrollHeight;
+            debugLog(`Message added to ${channel}: ${message}`);
+        }
+
+        // Socket.io event handlers
+        socket.on('connect', () => {
+            debugLog('Connected to server');
+            addMessage('allied', 'Connected to server', true);
+            addMessage('enemy', 'Connected to server', true);
+            // Set initial dictionary to English
+            updateDictionary('english');
+        });
+
+        socket.on('game_update', (data) => {
+            debugLog('Game update received');
+            gameState = data;
+            updateGrid(gameState);
+            
+            // Update status text
+            const statusMessage = data.message || 'AWAITING ORDERS...';
+            document.getElementById('game-status').textContent = statusMessage;
+            
+            // If there was a command, show the result in debug log
+            if (data.original_command) {
+                debugLog(`Command result: ${data.success ? 'SUCCESS' : 'FAILED'}: ${data.message}`);
+            }
+            
+            // Update dictionary if player1's language changed
+            if (data.languages && data.languages.player1) {
+                updateDictionary(data.languages.player1);
+            }
+        });
+
+        socket.on('channel_message', (data) => {
+            if (data.channel === 'system') {
+                // System messages go to both channels
+                addMessage('allied', data.message, true);
+                addMessage('enemy', data.message, true);
+            } else {
+                // Check if this is a command, result or regular message
+                const isCommand = data.is_command === true;
+                const isResult = data.is_result === true;
+                const isSuccess = data.success === true;
+                
+                // Add the message with appropriate styling
+                addMessage(
+                    data.channel, 
+                    data.message, 
+                    false, 
+                    false, 
+                    data.parsed_command,
+                    isCommand,
+                    isResult,
+                    isSuccess
+                );
+            }
+        });
+
+        // Initialize the grid when the page loads
+        window.onload = function() {
+            initializeGrid();
+            updateDictionary('english');
+            debugLog('ChatWar Command Center initialized');
+        };
+
+        // Dictionary button click handler
+        document.getElementById('dictionary-btn').addEventListener('click', function() {
+            window.open('/dictionary', '_blank');
+        });
+    </script>
+</body>
+</html>

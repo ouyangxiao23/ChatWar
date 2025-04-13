@@ -1,0 +1,49 @@
+{
+  "languages": {
+    "swahili": {
+      "name": "Swahili",
+      "code": "sw",
+      "description": "Swahili language support for military instructions",
+      "examples": [
+        {
+          "text": "Kikosi Alpha ziende 2,2 kwa msaada wa Timu Bravo",
+          "explanation": "Alpha Team move to 2,2 with support from Team Bravo"
+        },
+        {
+          "text": "Timu Charlie ishambulie 5,7 kabla ya alfajiri",
+          "explanation": "Team Charlie attack 5,7 before dawn"
+        }
+      ]
+    },
+    "english": {
+      "name": "English",
+      "code": "en",
+      "description": "English language support for military instructions",
+      "examples": [
+        {
+          "text": "Team Alpha move to 2,2 with Bravo Team support",
+          "explanation": "Alpha Team move to 2,2 with support from Team Bravo"
+        },
+        {
+          "text": "Charlie Squad attack position 5,7 before sunrise",
+          "explanation": "Team Charlie attack 5,7 before dawn"
+        }
+      ]
+    },
+    "hindi": {
+      "name": "Hindi",
+      "code": "hi",
+      "description": "Hindi language support for military instructions",
+      "examples": [
+        {
+          "text": "टीम अल्फा 2,2 पर जाए, ब्रावो टीम के साथ",
+          "explanation": "Alpha Team move to 2,2 with support from Team Bravo"
+        },
+        {
+          "text": "चार्ली टीम 5,7 पर हमला करें सुबह से पहले",
+          "explanation": "Team Charlie attack 5,7 before dawn"
+        }
+      ]
+    }
+  }
+} 

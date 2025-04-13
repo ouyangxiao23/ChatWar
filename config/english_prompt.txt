@@ -1,0 +1,102 @@
+Combine capabilities from your folders to analyze:
+{text}
+
+Output JSON with structure:
+{{
+  "text": "{text}",
+  "orders": [
+    {{
+      "unit": "extracted_unit",
+      "action": "move|attack|NONE",
+      "parameters": {{
+        "x": "x_coord",
+        "y": "y_coord"
+      }} | null
+    }}
+  ]
+}}
+
+Number correlations:
+- zero, 0
+- one, 1
+- two, 2
+- three, 3
+- four, 4
+- five, 5
+
+examples:
+    {{
+        "text": "Alpha go to 0,0, yesterday went to 1,1",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "move",
+            "parameters": ["0","0"]
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Unit Alpha is moving to position 2,2 during the rain",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "move",
+            "parameters": ["2","2"]
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Alpha has been ordered to attack coordinates 5,2",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Units Alpha and Beta will be attacking 5,2 tomorrow",
+        "orders": [
+          {{
+            "unit": "Alpha",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+          }},
+          {{
+            "unit": "Beta",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+          }}
+        ]
+    }}
+
+Apply techniques from:
+- text-classification (military vs civilian)
+- token-classification (entity recognition)
+- translation (English to structured data)
+- question-answering (command extraction)
+- tense analysis (present, past, future, continuous)
+- particle analysis (to, at, in, on, etc.)
+- inflection analysis (go/went/going, attack/attacking/attacked)
+
+Rules:
+1. Always extract the most recent command if multiple commands are present
+2. Ignore temporal references (yesterday, tomorrow, etc.) and focus on the command
+3. Handle continuous forms (is moving, will be attacking) as regular commands
+4. Consider particles (to, at, in) as part of the command structure
+5. Extract coordinates regardless of format (0,0 or 0 0 or position 0,0)
+
+Only output JSON, no commentary.

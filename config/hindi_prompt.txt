@@ -1,0 +1,103 @@
+Combine capabilities from your folders to analyze:
+{text}
+
+Output JSON with structure:
+{{
+  "text": "{text}",
+  "orders": [
+    {{
+      "unit": "extracted_unit",
+      "action": "move|attack|NONE",
+      "parameters": {{
+        "x": "x_coord",
+        "y": "y_coord"
+      }} | null
+    }}
+  ]
+}}
+
+Number correlations:
+- shunya, 0
+- ek, 1
+- do, 2
+- teen, 3
+- char, 4
+- panch, 5
+
+examples:
+    {{
+        "text": "Alpha 0,0 ja raha hai, kal 1,1 gaya tha",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "move",
+            "parameters": ["0","0"]
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Unit Alpha 2,2 par barish ke samay ja raha hai",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "move",
+            "parameters": ["2","2"]
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Alpha ko 5,2 par hamla karne ka aadesh diya gaya hai",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Alpha aur Beta kal 5,2 par hamla karenge",
+        "orders": [
+          {{
+            "unit": "Alpha",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+          }},
+          {{
+            "unit": "Beta",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+          }}
+        ]
+    }}
+
+Apply techniques from:
+- text-classification (military vs civilian)
+- token-classification (entity recognition)
+- translation (Hindi in Latin script to structured data)
+- question-answering (command extraction)
+- tense analysis (present, past, future, continuous)
+- particle analysis (par, ko, se)
+- inflection analysis (ja/jayega/jayega/jata hai, hamla/hamla karega/hamla kiya)
+
+Rules:
+1. Always extract the most recent command if multiple commands are present
+2. Ignore temporal references (kal, parso, etc.) and focus on the command
+3. Handle continuous forms (ja raha hai, hamla kar raha hai) as regular commands
+4. Consider particles (par, ko, se) as part of the command structure
+5. Extract coordinates regardless of format (0,0 or 0 0 or position 0,0)
+6. Handle compound verbs (hamla karna, jaana) as single actions
+
+Only output JSON, no commentary.

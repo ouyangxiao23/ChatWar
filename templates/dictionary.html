@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatWar - Language Dictionary</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .dictionary-box {
+            background-color: #000000;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            height: 400px;
+            overflow-y: auto;
+            color: #ffffff;
+        }
+        .dictionary-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .dictionary-section {
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .word-item {
+            background-color: #2a2a2a;
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: #ffffff;
+        }
+        .language-selector {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .language-btn {
+            padding: 8px 15px;
+            background-color: #333;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            cursor: pointer;
+        }
+        .language-btn.active {
+            background-color: #0078d7;
+        }
+        .game-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ChatWar Language Dictionary</h1>
+        
+        <div class="language-selector">
+            <button class="language-btn" data-lang="english">English</button>
+            <button class="language-btn" data-lang="swahili">Swahili</button>
+            <button class="language-btn" data-lang="hindi">Hindi</button>
+        </div>
+        
+        <!-- English Dictionary -->
+        <div class="dictionary-box" id="english-dict">
+            <div class="dictionary-title">MILITARY DICTIONARY</div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">MOVE COMMANDS:</div>
+                <div class="word-list">
+                    <div class="word-item">move</div>
+                    <div class="word-item">advance</div>
+                    <div class="word-item">proceed</div>
+                    <div class="word-item">go</div>
+                    <div class="word-item">march</div>
+                    <div class="word-item">relocate</div>
+                    <div class="word-item">shift</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">ATTACK COMMANDS:</div>
+                <div class="word-list">
+                    <div class="word-item">attack</div>
+                    <div class="word-item">strike</div>
+                    <div class="word-item">hit</div>
+                    <div class="word-item">assault</div>
+                    <div class="word-item">engage</div>
+                    <div class="word-item">charge</div>
+                    <div class="word-item">raid</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">UNIT IDENTIFIERS:</div>
+                <div class="word-list">
+                    <div class="word-item">Alpha</div>
+                    <div class="word-item">Beta</div>
+                    <div class="word-item">Gamma</div>
+                    <div class="word-item">Delta</div>
+                    <div class="word-item">Squad</div>
+                    <div class="word-item">Team</div>
+                    <div class="word-item">Unit</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">NUMBERS:</div>
+                <div class="word-list">
+                    <div class="word-item">zero/0</div>
+                    <div class="word-item">one/1</div>
+                    <div class="word-item">two/2</div>
+                    <div class="word-item">three/3</div>
+                    <div class="word-item">four/4</div>
+                    <div class="word-item">five/5</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">DIRECTIONS:</div>
+                <div class="word-list">
+                    <div class="word-item">north</div>
+                    <div class="word-item">south</div>
+                    <div class="word-item">east</div>
+                    <div class="word-item">west</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Swahili Dictionary -->
+        <div class="dictionary-box" id="swahili-dict" style="display: none;">
+            <div class="dictionary-title">KAMUSI YA KIJESHI / MILITARY DICTIONARY</div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">AMRI ZA KUSOGEZA:</div>
+                <div class="word-list">
+                    <div class="word-item">nenda</div>
+                    <div class="word-item">ziende</div>
+                    <div class="word-item">sogeza</div>
+                    <div class="word-item">hamisha</div>
+                    <div class="word-item">tembea</div>
+                    <div class="word-item">peleka</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">AMRI ZA KUSHAMBULIA:</div>
+                <div class="word-list">
+                    <div class="word-item">shambulia</div>
+                    <div class="word-item">vamia</div>
+                    <div class="word-item">piga</div>
+                    <div class="word-item">rukia</div>
+                    <div class="word-item">dhuru</div>
+                    <div class="word-item">pambana</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">VITAMBULISHO VYA VIKOSI:</div>
+                <div class="word-list">
+                    <div class="word-item">Alpha</div>
+                    <div class="word-item">Beta</div>
+                    <div class="word-item">Gamma</div>
+                    <div class="word-item">Delta</div>
+                    <div class="word-item">Kikosi</div>
+                    <div class="word-item">Jeshi</div>
+                    <div class="word-item">Wapiganaji</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">NAMBARI:</div>
+                <div class="word-list">
+                    <div class="word-item">sifuri/0</div>
+                    <div class="word-item">moja/1</div>
+                    <div class="word-item">mbili/2</div>
+                    <div class="word-item">tatu/3</div>
+                    <div class="word-item">nne/4</div>
+                    <div class="word-item">tano/5</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">MAELEKEZO:</div>
+                <div class="word-list">
+                    <div class="word-item">kaskazini</div>
+                    <div class="word-item">kusini</div>
+                    <div class="word-item">mashariki</div>
+                    <div class="word-item">magharibi</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hindi Dictionary -->
+        <div class="dictionary-box" id="hindi-dict" style="display: none;">
+            <div class="dictionary-title">सैन्य शब्दकोश / MILITARY DICTIONARY</div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">गति आदेश:</div>
+                <div class="word-list">
+                    <div class="word-item">जाओ</div>
+                    <div class="word-item">बढ़ो</div>
+                    <div class="word-item">चलो</div>
+                    <div class="word-item">आगे बढ़ो</div>
+                    <div class="word-item">स्थानांतरित करो</div>
+                    <div class="word-item">प्रस्थान करो</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">आक्रमण आदेश:</div>
+                <div class="word-list">
+                    <div class="word-item">हमला करो</div>
+                    <div class="word-item">आक्रमण करो</div>
+                    <div class="word-item">प्रहार करो</div>
+                    <div class="word-item">वार करो</div>
+                    <div class="word-item">धावा बोलो</div>
+                    <div class="word-item">मार करो</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">इकाई पहचानकर्ता:</div>
+                <div class="word-list">
+                    <div class="word-item">अल्फा</div>
+                    <div class="word-item">बीटा</div>
+                    <div class="word-item">गामा</div>
+                    <div class="word-item">डेल्टा</div>
+                    <div class="word-item">यूनिट</div>
+                    <div class="word-item">दस्ता</div>
+                    <div class="word-item">टुकड़ी</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">संख्या:</div>
+                <div class="word-list">
+                    <div class="word-item">शून्य/0</div>
+                    <div class="word-item">एक/1</div>
+                    <div class="word-item">दो/2</div>
+                    <div class="word-item">तीन/3</div>
+                    <div class="word-item">चार/4</div>
+                    <div class="word-item">पांच/5</div>
+                </div>
+            </div>
+            
+            <div class="dictionary-section">
+                <div class="section-title">दिशाएँ:</div>
+                <div class="word-list">
+                    <div class="word-item">उत्तर</div>
+                    <div class="word-item">दक्षिण</div>
+                    <div class="word-item">पूर्व</div>
+                    <div class="word-item">पश्चिम</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <h2>Game Command Format</h2>
+            <p>MOVE: "move [unit] [x] [y]" (e.g. "move p1_0 3 4" or "move alpha 3 4")</p>
+            <p>ATTACK: "attack [unit] [target_x] [target_y]" (e.g. "attack p1_1 5 2" or "attack beta 5 2")</p>
+            <p>Units can be identified by:</p>
+            <ul>
+                <li>Unit IDs: p1_0 to p1_3 (Player 1), p2_0 to p2_3 (Player 2)</li>
+                <li>Commander Names: Alpha, Beta, Gamma, Delta</li>
+            </ul>
+            <p>Grid coordinates: x and y from 0 to 5</p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all language buttons and dictionary divs
+            const langButtons = document.querySelectorAll('.language-btn');
+            const dictionaries = {
+                'english': document.getElementById('english-dict'),
+                'swahili': document.getElementById('swahili-dict'),
+                'hindi': document.getElementById('hindi-dict')
+            };
+            
+            // Add click event to language buttons
+            langButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const lang = this.getAttribute('data-lang');
+                    
+                    // Hide all dictionaries
+                    Object.values(dictionaries).forEach(dict => {
+                        dict.style.display = 'none';
+                    });
+                    
+                    // Show selected dictionary
+                    dictionaries[lang].style.display = 'block';
+                    
+                    // Update active button
+                    langButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // Set English as default active language
+            document.querySelector('[data-lang="english"]').classList.add('active');
+        });
+    </script>
+</body>
+</html> 

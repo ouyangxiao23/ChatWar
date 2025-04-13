@@ -1,0 +1,103 @@
+Combine capabilities from your folders to analyze:
+{text}
+
+Output JSON with structure:
+{{
+  "text": "{text}",
+  "orders": [
+    {{
+      "unit": "extracted_unit",
+      "action": "move|attack|NONE",
+      "parameters": {{
+        "x": "x_coord",
+        "y": "y_coord"
+      }} | null
+    }}
+  ]
+}}
+
+Number correlations:
+- sifuri, 0
+- moja, 1
+- mbili, 2
+- tatu, 3
+- nne, 4
+- tano, 5
+
+examples:
+    {{
+        "text": "Alpha zi-ende 0,0, jana zi-li-enda 1,1",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "move",
+            "parameters": ["0","0"]
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Kikosi Alpha zi-nende 2,2 wakati wa mvua",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "move",
+            "parameters": ["2","2"]
+        }}
+        ]
+    }}
+
+    {{
+        "text": "Alpha zi-me-amriwa zi-shambulie 5,2",
+        "orders": [
+        {{
+            "unit": "Alpha",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+        }}
+        ]
+    }}
+
+    {{
+        "text": "lakini Kikosi Alpha na Beta zili-shambulia 5,2",
+        "orders": [
+          {{
+            "unit": "Alpha",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+          }},
+          {{
+            "unit": "Beta",
+            "action": "attack",
+            "parameters": {{
+              "x": "5",
+              "y": "2"
+            }}
+          }}
+        ]
+    }}
+
+Apply techniques from:
+- text-classification (military vs civilian)
+- token-classification (entity recognition)
+- translation (Swahili to structured data)
+- question-answering (command extraction)
+- tense analysis (present, past, future, perfect)
+- particle analysis (na, li, me, ta, etc.)
+- inflection analysis (enda/lienda/naenda/tenda, shambulia/lishambulia/nashambulia/tashambulia)
+
+Rules:
+1. Always extract the most recent command if multiple commands are present
+2. Ignore temporal references (jana, kesho, etc.) and focus on the command
+3. Handle continuous forms (naenda, nashambulia) as regular commands
+4. Consider tense markers (na, li, me, ta) as part of the verb structure
+5. Extract coordinates regardless of format (0,0 or 0 0 or position 0,0)
+6. Handle subject prefixes (zi-, a-, etc.) as part of the verb structure
+
+Only output JSON, no commentary.
