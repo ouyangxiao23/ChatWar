@@ -1,6 +1,6 @@
 # ChatWar
 
-**URL: [ChatWar.onrender.com](https://ChatWar.onrender.com)**
+**URL: [chatwar.onrender.com](https://chatwar.onrender.com)**
 
 ## Overview
 
@@ -54,7 +54,6 @@ This project explores several linguistic concepts covered in the "Understanding 
 2. **Natural Language Processing**: Using AI to interpret and execute commands in multiple languages.
 3. **Command Interpretation**: The importance of deciphering foreign languages in high-stakes environments.
 
-## Development
 
 ### Prerequisites
 
@@ -70,18 +69,6 @@ cd ChatWar
 pip install -r requirements.txt
 python run.py
 ```
-
-### Running Tests
-
-```bash
-python test_integration.py
-```
-
-## Future Development
-
-- **Multi-Language Support**: The game will support additional languages through configuration files.
-- **Enhanced Command Parsing**: Future iterations will improve the AI's ability to parse complex commands and translate them into actionable game orders.
-- **Integration of Language Models**: Plans to incorporate models like mT5 for better command interpretation and execution.
 
 ## License
 
