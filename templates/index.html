@@ -413,6 +413,58 @@
             color: #00ff00;
         }
         
+        /* Player selection overlay */
+        #player-selection-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .selection-title {
+            color: #00ff00;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .player-buttons {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .player-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #001100;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .player-button:hover {
+            background-color: #002200;
+            transform: scale(1.05);
+        }
+        
+        .player-button.player1 {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .player-button.player2 {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -453,6 +505,14 @@
     </style>
 </head>
 <body>
+    <div id="player-selection-overlay">
+        <div class="selection-title">SELECT YOUR ROLE</div>
+        <div class="player-buttons">
+            <button id="select-player1" class="player-button player1">PLAYER 1 (ALLIED)</button>
+            <button id="select-player2" class="player-button player2">PLAYER 2 (ENEMY)</button>
+        </div>
+    </div>
+    
     <div class="header">
         <div class="title">CHATWAR COMMAND CENTER</div>
         <div class="controls">
@@ -465,7 +525,7 @@
     <div class="container">
         <div class="channel">
             <div class="channel-title">
-                <span>ALLIED TRANSMISSION</span>
+                <span>WHITE TRANSMISSION</span>
                 <select id="allied-language" class="language-selector" onchange="changeLanguage('player1', this.value)">
                     <option value="english">ENGLISH</option>
                     <option value="swahili">SWAHILI</option>
@@ -484,8 +544,8 @@
             <div class="grid" id="game-grid"></div>
             <div class="status" id="game-status">AWAITING ORDERS...</div>
             <div class="language-info" id="language-info">
-                <div>ALLIED: <span id="player1-language">ENGLISH</span></div>
-                <div>ENEMY: <span id="player2-language">SWAHILI</span></div>
+                <div>WHITE: <span id="player1-language">ENGLISH</span></div>
+                <div>RED: <span id="player2-language">SWAHILI</span></div>
             </div>
             <div class="command-help">
                 <h3>MILITARY DICTIONARY</h3>
@@ -532,7 +592,7 @@
 
         <div class="channel">
             <div class="channel-title">
-                <span>ENEMY TRANSMISSION</span>
+                <span>RED TRANSMISSION</span>
                 <select id="enemy-language" class="language-selector" onchange="changeLanguage('player2', this.value)">
                     <option value="swahili">SWAHILI</option>
                     <option value="english">ENGLISH</option>
@@ -556,6 +616,8 @@
         let debugMode = true;
         let selectedUnitId = null;
         let selectedUnitCells = [];
+        let currentPlayer = null; // 'player1' or 'player2'
+        let isConnected = false;
 
         // Dictionary data
         const dictionaries = {
@@ -658,14 +720,20 @@
         }
 
         function changeLanguage(player, language) {
+            // Only allow changing language for own player
+            if (currentPlayer && player !== currentPlayer) {
+                debugLog(`Cannot change language for ${player} as ${currentPlayer}`);
+                return;
+            }
+            
             debugLog(`Changing ${player} language to ${language}`);
             socket.emit('set_language', {
                 player: player,
                 language: language
             });
             
-            // Update dictionary if allied language changes
-            if (player === 'player1') {
+            // Update dictionary for own language
+            if (player === currentPlayer) {
                 updateDictionary(language);
             }
         }
@@ -725,17 +793,24 @@
                 return;
             }
             
-            // If there's a unit at this position, select it and show range
+            // If there's a unit at this position, check if it belongs to current player
             if (unitAtPosition) {
-                clearRangeHighlights();
-                selectedUnitId = unitIdAtPosition;
-                highlightUnitRange(unitAtPosition);
+                const isOwnUnit = (currentPlayer === 'player1' && unitIdAtPosition.startsWith('p1_')) ||
+                                 (currentPlayer === 'player2' && unitIdAtPosition.startsWith('p2_'));
                 
-                // Mark the selected cell
-                const cell = document.getElementById(`cell-${x}-${y}`);
-                cell.classList.add('selected');
-                
-                debugLog(`Selected unit: ${unitAtPosition.commander} (${unitAtPosition.type})`);
+                if (isOwnUnit) {
+                    clearRangeHighlights();
+                    selectedUnitId = unitIdAtPosition;
+                    highlightUnitRange(unitAtPosition);
+                    
+                    // Mark the selected cell
+                    const cell = document.getElementById(`cell-${x}-${y}`);
+                    cell.classList.add('selected');
+                    
+                    debugLog(`Selected unit: ${unitAtPosition.commander} (${unitAtPosition.type})`);
+                } else {
+                    debugLog(`Cannot select opponent's unit: ${unitAtPosition.commander}`);
+                }
                 return;
             }
             
@@ -834,7 +909,19 @@
                 const cell = document.getElementById(`cell-${x}-${y}`);
                 
                 const unitDiv = document.createElement('div');
-                unitDiv.className = `unit ${id.startsWith('p1_') ? 'friendly' : 'hostile'}`;
+                
+                // Determine friendly/hostile based on player role
+                let isFriendly;
+                if (currentPlayer === 'player1') {
+                    isFriendly = id.startsWith('p1_');
+                } else if (currentPlayer === 'player2') {
+                    isFriendly = id.startsWith('p2_');
+                } else {
+                    // Default behavior if no player selected yet
+                    isFriendly = id.startsWith('p1_');
+                }
+                
+                unitDiv.className = `unit ${isFriendly ? 'friendly' : 'hostile'}`;
                 unitDiv.textContent = unit.type;
                 
                 const commanderDiv = document.createElement('div');
@@ -862,16 +949,24 @@
             
             // If we had a selected unit, try to find it and reselect it
             if (previousSelectedUnitId && state.units[previousSelectedUnitId]) {
-                selectedUnitId = previousSelectedUnitId;
-                const unit = state.units[selectedUnitId];
-                const [x, y] = unit.position;
+                // Only allow selecting own units
+                const isOwnUnit = (currentPlayer === 'player1' && previousSelectedUnitId.startsWith('p1_')) ||
+                                 (currentPlayer === 'player2' && previousSelectedUnitId.startsWith('p2_'));
                 
-                // Mark the cell as selected
-                const cell = document.getElementById(`cell-${x}-${y}`);
-                cell.classList.add('selected');
-                
-                // Highlight range
-                highlightUnitRange(unit);
+                if (isOwnUnit) {
+                    selectedUnitId = previousSelectedUnitId;
+                    const unit = state.units[selectedUnitId];
+                    const [x, y] = unit.position;
+                    
+                    // Mark the cell as selected
+                    const cell = document.getElementById(`cell-${x}-${y}`);
+                    cell.classList.add('selected');
+                    
+                    // Highlight range
+                    highlightUnitRange(unit);
+                } else {
+                    selectedUnitId = null;
+                }
             } else {
                 selectedUnitId = null;
             }
@@ -907,10 +1002,14 @@
         let enemyHistoryIndex = -1;
 
         function sendMessage(channel) {
+            // Remove the restriction that prevented players from sending in both channels
             const input = document.getElementById(`${channel}-input`);
             const message = input.value.trim();
             if (message) {
                 debugLog(`Sending message from ${channel}: ${message}`);
+                
+                // Determine which player role to use based on the channel
+                const player = channel === 'allied' ? 'player1' : 'player2';
                 
                 const parts = message.toLowerCase().split(' ');
                 if ((parts[0] === 'move' && parts.length === 4) || 
@@ -918,14 +1017,14 @@
                     debugLog(`Recognized as ${parts[0]} command`);
                     socket.emit(parts[0], {
                         command: message,
-                        player: channel === 'allied' ? 'player1' : 'player2'
+                        player: player
                     });
                 } else {
                     // Regular message or natural language command
                     debugLog('Sending as command through language parser');
                     socket.emit('command', {
                         command: message,
-                        player: channel === 'allied' ? 'player1' : 'player2'
+                        player: player
                     });
                 }
                 
@@ -1039,10 +1138,10 @@
         // Socket.io event handlers
         socket.on('connect', () => {
             debugLog('Connected to server');
-            addMessage('allied', 'Connected to server', true);
-            addMessage('enemy', 'Connected to server', true);
-            // Set initial dictionary to English
-            updateDictionary('english');
+            isConnected = true;
+            
+            // Don't show connected message until player selects a role
+            // This happens in selectPlayer() function
         });
 
         socket.on('game_update', (data) => {
@@ -1050,18 +1149,10 @@
             gameState = data;
             updateGrid(gameState);
             
-            // Update status text
-            const statusMessage = data.message || 'AWAITING ORDERS...';
-            document.getElementById('game-status').textContent = statusMessage;
-            
-            // If there was a command, show the result in debug log
-            if (data.original_command) {
-                debugLog(`Command result: ${data.success ? 'SUCCESS' : 'FAILED'}: ${data.message}`);
-            }
-            
-            // Update dictionary if player1's language changed
-            if (data.languages && data.languages.player1) {
-                updateDictionary(data.languages.player1);
+            // Update dictionary based on player role
+            if (currentPlayer && gameState.languages) {
+                const playerLanguage = gameState.languages[currentPlayer];
+                updateDictionary(playerLanguage);
             }
         });
 
@@ -1070,37 +1161,132 @@
                 // System messages go to both channels
                 addMessage('allied', data.message, true);
                 addMessage('enemy', data.message, true);
-            } else {
-                // Check if this is a command, result or regular message
-                const isCommand = data.is_command === true;
-                const isResult = data.is_result === true;
-                const isSuccess = data.success === true;
-                
-                // Add the message with appropriate styling
-                addMessage(
-                    data.channel, 
-                    data.message, 
-                    false, 
-                    false, 
-                    data.parsed_command,
-                    isCommand,
-                    isResult,
-                    isSuccess
-                );
+                return;
             }
+            
+            // For regular messages, we want to show full details for commands from both sides
+            // but for the opponent's result messages, we only want to show the original command
+            
+            // If this is a result message (showing success/failure)
+            if (data.is_result) {
+                // For result messages, only show them in full if they correspond to the player's role
+                const isOwnResult = 
+                    (currentPlayer === 'player1' && data.channel === 'allied') ||
+                    (currentPlayer === 'player2' && data.channel === 'enemy');
+                
+                if (isOwnResult) {
+                    // Show full result message for player's own commands
+                    addMessage(
+                        data.channel, 
+                        data.message, 
+                        false, 
+                        false, 
+                        data.parsed_command,
+                        data.is_command,
+                        data.is_result,
+                        data.success
+                    );
+                }
+                // Don't show result messages for opponent at all
+                return;
+            }
+            
+            // For non-result messages (like original commands)
+            addMessage(
+                data.channel, 
+                data.message, 
+                false, 
+                false, 
+                // Only show parsed command if it's the player's own channel
+                ((currentPlayer === 'player1' && data.channel === 'allied') || 
+                 (currentPlayer === 'player2' && data.channel === 'enemy')) ? data.parsed_command : null,
+                data.is_command,
+                false, // Never show as result
+                false  // Never show success/failure
+            );
         });
 
         // Initialize the grid when the page loads
         window.onload = function() {
             initializeGrid();
-            updateDictionary('english');
+            
+            // Don't update dictionary until player role is selected
+            // This will happen in selectPlayer()
+            
+            // Disable inputs until player selects a role
+            document.getElementById('allied-input').disabled = true;
+            document.getElementById('enemy-input').disabled = true;
+            
             debugLog('ChatWar Command Center initialized');
+            debugLog('Please select your role to begin');
         };
 
         // Dictionary button click handler
         document.getElementById('dictionary-btn').addEventListener('click', function() {
             window.open('/dictionary', '_blank');
         });
+
+        // Player selection handlers
+        document.getElementById('select-player1').addEventListener('click', function() {
+            selectPlayer('player1');
+        });
+        
+        document.getElementById('select-player2').addEventListener('click', function() {
+            selectPlayer('player2');
+        });
+        
+        function selectPlayer(player) {
+            currentPlayer = player;
+            document.getElementById('player-selection-overlay').style.display = 'none';
+            
+            // Update UI based on player selection
+            updateUIForPlayerRole();
+            
+            // Notify server about player selection
+            socket.emit('select_player', { player: player });
+            
+            // Enable both input fields - users can now send from either channel
+            document.getElementById('allied-input').disabled = false;
+            document.getElementById('enemy-input').disabled = false;
+            
+            debugLog(`Selected role: ${player}`);
+            addMessage(getOwnChannel(), `You have joined as ${player === 'player1' ? 'Player 1 (White)' : 'Player 2 (Red)'}`, true);
+        }
+        
+        function updateUIForPlayerRole() {
+            // Update channel titles to indicate the player's role
+            if (currentPlayer === 'player1') {
+                // If player1, highlight that they are White
+                document.querySelector('.channel-title span:first-child').textContent = 'WHITE TRANSMISSION (YOU)';
+                document.querySelector('.channel:last-child .channel-title span:first-child').textContent = 'RED TRANSMISSION';
+                
+                // Only allow changing white (player1) language
+                document.getElementById('allied-language').disabled = false;
+                document.getElementById('enemy-language').disabled = true;
+            } else {
+                // If player2, highlight that they are Red
+                document.querySelector('.channel-title span:first-child').textContent = 'WHITE TRANSMISSION';
+                document.querySelector('.channel:last-child .channel-title span:first-child').textContent = 'RED TRANSMISSION (YOU)';
+                
+                // Only allow changing red (player2) language
+                document.getElementById('allied-language').disabled = true;
+                document.getElementById('enemy-language').disabled = false;
+            }
+            
+            // Enable inputs for the selected player
+            document.getElementById('allied-input').disabled = false;
+            document.getElementById('enemy-input').disabled = false;
+        }
+        
+        function getOwnChannel() {
+            // Return the appropriate channel name based on player role
+            return currentPlayer === 'player1' ? 'allied' : 'enemy';
+        }
+        
+        function getOpponentChannel() {
+            // Return the opposite channel
+            return currentPlayer === 'player1' ? 'enemy' : 'allied';
+        }
     </script>
 </body>
 </html>
