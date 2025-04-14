@@ -9,23 +9,24 @@
             color: #00ff00;
             font-family: 'Courier New', monospace;
             margin: 0;
-            padding: 20px;
+            padding: 10px 10px 10px 10px;
             display: flex;
             flex-direction: column;
             height: 100vh;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .header {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             position: relative;
         }
 
         .title {
-            font-size: 24px;
+            font-size: clamp(18px, 4vw, 24px);
             font-weight: bold;
             text-align: center;
             flex-grow: 1;
@@ -35,7 +36,9 @@
             position: absolute;
             right: 0;
             display: flex;
-            gap: 10px;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .dictionary-btn {
@@ -51,8 +54,10 @@
         .container {
             display: flex;
             width: 100%;
-            gap: 20px;
+            gap: 10px;
             flex-grow: 1;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .channel {
@@ -60,8 +65,12 @@
             background-color: #001100;
             border: 2px solid #00ff00;
             padding: 10px;
+            padding-bottom: 20px;
             display: flex;
             flex-direction: column;
+            height: 100%;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .channel-title {
@@ -86,8 +95,15 @@
         .messages {
             flex-grow: 1;
             overflow-y: auto;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             padding: 5px;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+            min-height: 0;
+        }
+        
+        .messages::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
 
         .message {
@@ -136,6 +152,14 @@
         .input-area {
             display: flex;
             gap: 5px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+            position: relative;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            min-height: 35px;
         }
 
         input[type="text"] {
@@ -145,15 +169,21 @@
             color: #00ff00;
             padding: 5px;
             font-family: 'Courier New', monospace;
+            height: 24px;
         }
 
         button {
             background-color: #003300;
             border: 1px solid #00ff00;
             color: #00ff00;
-            padding: 5px 10px;
+            padding: 3px 6px;
             cursor: pointer;
             font-family: 'Courier New', monospace;
+            font-size: min(14px, 2.5vw);
+            white-space: nowrap;
+            max-width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
         button:hover {
@@ -175,6 +205,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-width: 0;
+            overflow: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        .grid-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
 
         .grid {
@@ -184,12 +222,13 @@
             background-color: #001100;
             border: 2px solid #00ff00;
             padding: 2px;
-            margin-top: 10px;
+            margin-top: 5px;
+            width: min(100%, 500px);
         }
 
         .cell {
-            width: 80px;
-            height: 80px;
+            width: min(80px, 12vw);
+            height: min(80px, 12vw);
             background-color: #002200;
             border: 1px solid #004400;
             display: flex;
@@ -198,6 +237,7 @@
             justify-content: center;
             position: relative;
             cursor: pointer;
+            font-size: min(1rem, 3vw);
         }
 
         .cell:hover {
@@ -208,12 +248,12 @@
             position: absolute;
             top: 2px;
             left: 2px;
-            font-size: 10px;
+            font-size: min(10px, 1.8vw);
             color: #008800;
         }
 
         .unit {
-            font-size: 24px;
+            font-size: min(24px, 3.5vw);
             font-weight: bold;
         }
 
@@ -226,14 +266,14 @@
         }
 
         .commander {
-            font-size: 12px;
-            margin-top: 5px;
+            font-size: min(12px, 2vw);
+            margin-top: 3px;
         }
 
         .hp {
-            font-size: 10px;
+            font-size: min(10px, 1.8vw);
             position: absolute;
-            bottom: 5px;
+            bottom: 3px;
         }
 
         .city {
@@ -257,10 +297,11 @@
             text-align: left;
             width: 100%;
             box-sizing: border-box;
+            font-size: min(14px, 2.5vw);
         }
 
         #dictionary-container {
-            max-height: 200px;
+            max-height: min(200px, 25vh);
             overflow-y: auto;
             scrollbar-width: none; /* Firefox */
             -ms-overflow-style: none; /* IE and Edge */
@@ -326,6 +367,12 @@
             overflow-y: auto;
             font-family: monospace;
             font-size: 12px;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        .debug-log::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
         }
 
         .language-info {
@@ -354,6 +401,44 @@
         .language-info span {
             font-weight: bold;
             color: #00ff00;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .grid-container {
+                order: -1;
+            }
+            
+            .grid {
+                width: 100%;
+            }
+            
+            .channel {
+                height: 30vh;
+                padding-bottom: 25px;
+                margin-bottom: 10px;
+            }
+            
+            .controls {
+                position: static;
+                margin-top: 5px;
+                width: 100%;
+            }
+            
+            .header {
+                flex-direction: column;
+            }
+            
+            body {
+                padding-bottom: 45px;
+            }
+            
+            .input-area {
+                min-height: 40px;
+            }
         }
     </style>
 </head>
