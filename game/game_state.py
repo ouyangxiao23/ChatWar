@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
 import random
+import logging
+
+logger = logging.getLogger("game_state")
 
 @dataclass
 class Unit:
@@ -21,6 +24,8 @@ class GameState:
             'player1': {},
             'player2': {}
         }
+        self.game_over = False
+        self.winner = None
         self.initialize_game()
 
     def initialize_game(self):
@@ -28,9 +33,18 @@ class GameState:
         unit_types = ['T', 'I', 'A', 'G']
         commander_names = ['Alpha', 'Beta', 'Gamma', 'Delta']
         
+        # Track occupied positions
+        occupied_positions = set()
+        
         # 玩家1的单位（左侧）
         for i, (unit_type, commander) in enumerate(zip(unit_types, commander_names)):
-            pos = (random.randint(0, 2), random.randint(0, 5))
+            # Ensure positions don't overlap
+            while True:
+                pos = (random.randint(0, 2), random.randint(0, 5))
+                if pos not in occupied_positions:
+                    occupied_positions.add(pos)
+                    break
+                    
             unit_id = f'p1_{i}'
             self.units[unit_id] = Unit(unit_type, commander, 100, pos, 'player1')
             self.commander_to_id[commander.lower()] = unit_id
@@ -39,7 +53,13 @@ class GameState:
 
         # 玩家2的单位（右侧）
         for i, (unit_type, commander) in enumerate(zip(unit_types, commander_names)):
-            pos = (random.randint(3, 5), random.randint(0, 5))
+            # Ensure positions don't overlap
+            while True:
+                pos = (random.randint(3, 5), random.randint(0, 5))
+                if pos not in occupied_positions:
+                    occupied_positions.add(pos)
+                    break
+                    
             unit_id = f'p2_{i}'
             self.units[unit_id] = Unit(unit_type, commander, 100, pos, 'player2')
             self.commander_to_id[commander.lower()] = unit_id
@@ -47,15 +67,16 @@ class GameState:
             self.player_commanders['player2'][commander.lower()] = unit_id
 
         # 初始化城市
-        self.initialize_cities()
+        self.initialize_cities(occupied_positions)
 
-    def initialize_cities(self):
-        # 在地图上随机放置几个城市
+    def initialize_cities(self, occupied_positions):
+        # 在地图上随机放置几个城市，避免与单位重叠
         num_cities = 4
         while len(self.cities) < num_cities:
             pos = (random.randint(0, 5), random.randint(0, 5))
-            if pos not in self.cities:
+            if pos not in occupied_positions and pos not in self.cities:
                 self.cities.add(pos)
+                occupied_positions.add(pos)
 
     def is_valid_position(self, pos: Tuple[int, int]) -> bool:
         x, y = pos
@@ -65,6 +86,13 @@ class GameState:
         if unit_id not in self.units:
             print(f"Invalid unit ID: {unit_id}")
             return {'success': False, 'message': 'Invalid unit ID'}
+
+        unit = self.units[unit_id]
+        
+        # Check if unit is a Garrison (non-movable)
+        if unit.unit_type == 'G':
+            print(f"Unit {unit_id} is a Garrison and cannot move")
+            return {'success': False, 'message': 'Garrison units cannot move'}
 
         if not self.is_valid_position(new_pos):
             print(f"Invalid position: {new_pos}")
@@ -81,7 +109,6 @@ class GameState:
             print(f"Position {new_pos} contains a city")
             return {'success': False, 'message': 'Cannot move onto a city'}
 
-        unit = self.units[unit_id]
         old_pos = unit.position
         unit.position = new_pos
         print(f"Unit {unit_id} moved from {old_pos} to {new_pos}")
@@ -96,6 +123,12 @@ class GameState:
 
         attacker = self.units[attacker_id]
         print(f"Attacker found - Commander: {attacker.commander}, Position: {attacker.position}")
+        
+        # Check attack range based on unit type
+        attack_range = self.get_attack_range(attacker.unit_type)
+        if not self.is_in_range(attacker.position, target_pos, attack_range):
+            print(f"Attack failed - Target out of range for {attacker.unit_type}")
+            return {'success': False, 'message': f'Target out of range (max range: {attack_range})'}
         
         # Find target unit at position
         target = None
@@ -117,16 +150,7 @@ class GameState:
         target.hp -= damage
         print(f"Combat result - Damage dealt: {damage}, Target's remaining HP: {target.hp}")
 
-        if target.hp <= 0:
-            print(f"Unit eliminated - {target.commander} was destroyed")
-            del self.units[target_id]
-            return {
-                'success': True,
-                'message': f'{attacker.commander} destroyed {target.commander}',
-                'eliminated': target_id
-            }
-
-        return {
+        result = {
             'success': True,
             'message': f'{attacker.commander} dealt {damage} damage to {target.commander}',
             'damage': damage,
@@ -134,8 +158,78 @@ class GameState:
             'target_hp': target.hp
         }
 
+        if target.hp <= 0:
+            print(f"Unit eliminated - {target.commander} was destroyed")
+            # Remove the unit
+            del self.units[target_id]
+            result['message'] = f'{attacker.commander} destroyed {target.commander}'
+            result['eliminated'] = target_id
+            
+            # Check for victory condition
+            self.check_victory_condition()
+            if self.game_over:
+                result['game_over'] = True
+                result['winner'] = self.winner
+                result['message'] += f". {self.winner} has won the game!"
+
+        return result
+
+    def get_attack_range(self, unit_type: str) -> int:
+        """Get the attack range for a given unit type"""
+        attack_ranges = {
+            'G': 1,  # Garrison has range 1
+            'I': 1,  # Infantry has range 1
+            'T': 2,  # Tank has range 2
+            'A': 4   # Artillery has range 4
+        }
+        return attack_ranges.get(unit_type, 1)  # Default to 1 if unit type not recognized
+        
+    def is_in_range(self, source_pos: Tuple[int, int], target_pos: Tuple[int, int], max_range: int) -> bool:
+        """Check if target position is within the specified range from source position"""
+        x1, y1 = source_pos
+        x2, y2 = target_pos
+        
+        # Calculate Manhattan distance
+        distance = abs(x2 - x1) + abs(y2 - y1)
+        return distance <= max_range
+        
+    def get_cells_in_range(self, position: Tuple[int, int], range_value: int) -> List[Tuple[int, int]]:
+        """Get all valid grid cells within the specified range of a position"""
+        x, y = position
+        cells = []
+        
+        for dx in range(-range_value, range_value + 1):
+            for dy in range(-range_value, range_value + 1):
+                # Skip if manhattan distance exceeds range
+                if abs(dx) + abs(dy) > range_value:
+                    continue
+                    
+                new_x, new_y = x + dx, y + dy
+                
+                # Check if the position is valid
+                if self.is_valid_position((new_x, new_y)):
+                    cells.append((new_x, new_y))
+        
+        return cells
+
+    def check_victory_condition(self):
+        """Check if one side has lost all their units"""
+        player1_units = sum(1 for unit in self.units.values() if unit.side == 'player1')
+        player2_units = sum(1 for unit in self.units.values() if unit.side == 'player2')
+        
+        if player1_units == 0:
+            self.game_over = True
+            self.winner = 'Player 2'
+            logger.info("Player 2 has won the game by eliminating all enemy units!")
+        elif player2_units == 0:
+            self.game_over = True
+            self.winner = 'Player 1'
+            logger.info("Player 1 has won the game by eliminating all enemy units!")
+        
+        return self.game_over
+
     def get_game_state(self) -> Dict:
-        return {
+        state = {
             'units': {
                 uid: {
                     'type': unit.unit_type,
@@ -147,6 +241,14 @@ class GameState:
             },
             'cities': list(self.cities)
         }
+        
+        # Add game over status if applicable
+        if self.game_over:
+            state['game_over'] = True
+            state['winner'] = self.winner
+            state['message'] = f"{self.winner} has won the game!"
+        
+        return state
 
     def get_player_unit_id(self, commander_name: str, player: str) -> str:
         """Get unit ID for a player-specific commander name"""

@@ -240,6 +240,16 @@
             font-size: min(1rem, 3vw);
         }
 
+        .cell.in-range {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .cell.selected {
+            background-color: rgba(0, 150, 0, 0.3);
+            border: 1px solid #00ff00;
+        }
+
         .cell:hover {
             background-color: #003300;
         }
@@ -544,6 +554,8 @@
         const socket = io();
         let gameState = null;
         let debugMode = true;
+        let selectedUnitId = null;
+        let selectedUnitCells = [];
 
         // Dictionary data
         const dictionaries = {
@@ -691,6 +703,42 @@
         }
 
         function onCellClick(x, y) {
+            const position = [x, y];
+            
+            // Check if there's a unit at this position
+            let unitAtPosition = null;
+            let unitIdAtPosition = null;
+            
+            if (gameState && gameState.units) {
+                Object.entries(gameState.units).forEach(([id, unit]) => {
+                    if (unit.position[0] === x && unit.position[1] === y) {
+                        unitAtPosition = unit;
+                        unitIdAtPosition = id;
+                    }
+                });
+            }
+            
+            // If this is a selected unit, clear selection
+            if (selectedUnitId && unitIdAtPosition === selectedUnitId) {
+                clearRangeHighlights();
+                selectedUnitId = null;
+                return;
+            }
+            
+            // If there's a unit at this position, select it and show range
+            if (unitAtPosition) {
+                clearRangeHighlights();
+                selectedUnitId = unitIdAtPosition;
+                highlightUnitRange(unitAtPosition);
+                
+                // Mark the selected cell
+                const cell = document.getElementById(`cell-${x}-${y}`);
+                cell.classList.add('selected');
+                
+                debugLog(`Selected unit: ${unitAtPosition.commander} (${unitAtPosition.type})`);
+                return;
+            }
+            
             // Store the coordinates in the currently focused input
             const activeElement = document.activeElement;
             
@@ -711,15 +759,64 @@
                 debugLog(`Cell clicked: (${x}, ${y})`);
             }
         }
+        
+        function getAttackRange(unitType) {
+            const ranges = {
+                'G': 1,  // Garrison
+                'I': 1,  // Infantry
+                'T': 2,  // Tank
+                'A': 4   // Artillery
+            };
+            return ranges[unitType] || 1;
+        }
+        
+        function getManhattanDistance(pos1, pos2) {
+            return Math.abs(pos1[0] - pos2[0]) + Math.abs(pos1[1] - pos2[1]);
+        }
+        
+        function clearRangeHighlights() {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('in-range');
+                cell.classList.remove('selected');
+            });
+            selectedUnitCells = [];
+        }
+        
+        function highlightUnitRange(unit) {
+            const position = unit.position;
+            const range = getAttackRange(unit.type);
+            
+            // Highlight all cells within range
+            for (let x = 0; x < 6; x++) {
+                for (let y = 0; y < 6; y++) {
+                    const distance = getManhattanDistance(position, [x, y]);
+                    if (distance > 0 && distance <= range) {
+                        const cell = document.getElementById(`cell-${x}-${y}`);
+                        cell.classList.add('in-range');
+                        selectedUnitCells.push(cell);
+                    }
+                }
+            }
+            
+            debugLog(`Highlighted cells in range ${range} for ${unit.commander}`);
+        }
 
         function updateGrid(state) {
             debugLog('Updating grid with new state');
+            
+            // Save selected unit cells
+            const previousSelectedUnitId = selectedUnitId;
+            
             // Clear all cells
             document.querySelectorAll('.cell').forEach(cell => {
                 // Keep the coordinates
                 const coords = cell.querySelector('.cell-coordinates');
                 cell.innerHTML = '';
                 cell.appendChild(coords);
+                
+                // Remove range and selection classes, we'll reapply them later
+                cell.classList.remove('in-range');
+                cell.classList.remove('selected');
             });
 
             // Update cities
@@ -761,6 +858,45 @@
                 // Update the dropdown selectors
                 document.getElementById('allied-language').value = state.languages.player1;
                 document.getElementById('enemy-language').value = state.languages.player2;
+            }
+            
+            // If we had a selected unit, try to find it and reselect it
+            if (previousSelectedUnitId && state.units[previousSelectedUnitId]) {
+                selectedUnitId = previousSelectedUnitId;
+                const unit = state.units[selectedUnitId];
+                const [x, y] = unit.position;
+                
+                // Mark the cell as selected
+                const cell = document.getElementById(`cell-${x}-${y}`);
+                cell.classList.add('selected');
+                
+                // Highlight range
+                highlightUnitRange(unit);
+            } else {
+                selectedUnitId = null;
+            }
+            
+            // If game over, show winner message
+            if (state.game_over) {
+                const statusMessage = `GAME OVER: ${state.winner} WINS!`;
+                document.getElementById('game-status').textContent = statusMessage;
+                // Add a system message
+                addMessage('allied', statusMessage, true);
+                addMessage('enemy', statusMessage, true);
+            } else {
+                // Update status text
+                const statusMessage = state.message || 'AWAITING ORDERS...';
+                document.getElementById('game-status').textContent = statusMessage;
+            }
+            
+            // If there was a command, show the result in debug log
+            if (state.original_command) {
+                debugLog(`Command result: ${state.success ? 'SUCCESS' : 'FAILED'}: ${state.message}`);
+            }
+            
+            // Update dictionary if player1's language changed
+            if (state.languages && state.languages.player1) {
+                updateDictionary(state.languages.player1);
             }
         }
 
